@@ -220,6 +220,7 @@ private:
   uint32_t clientIpInt_;
 
   uint32_t versionMask_; // version mask that the miner wants
+  size_t versionRollingShareCounter_; // Used to detect and prevent potential problems with version rolling
   uint32_t extraNonce1_;   // MUST be unique across all servers
   static const int kExtraNonce2Size_ = 8;  // extraNonce2 size is always 8 bytes
 

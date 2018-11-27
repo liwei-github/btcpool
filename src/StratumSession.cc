@@ -223,6 +223,7 @@ bev_(bev), fd_(fd), server_(server)
   state_ = CONNECTED;
   currDiff_    = 0U;
   versionMask_ = 0U;
+  versionRollingShareCounter_ = 0U;
   extraNonce1_ = extraNonce1;
 
   // usually stratum job interval is 30~60 seconds, 10 is enough for miners
@@ -822,10 +823,23 @@ void StratumSession::handleRequest_Submit(const string &idStr,
   uint32_t versionMask = 0u;
   if (jparams.children()->size() >= 6) {
     versionMask = jparams.children()->at(5).uint32_hex();
+    versionRollingShareCounter_++;
   }
 
   handleRequest_Submit(idStr, shortJobId, extraNonce2, nonce, nTime,
                        false /* not agent session */, nullptr, versionMask);
+  
+  // detect and prevent potential problems with version rolling
+  if (jparams.children()->size() < 6 && versionRollingShareCounter_ > 100) {
+    // Version rolling disabled mid-way, it may be a firmware issue.
+    // Reconnect to avoid loss of hashrate.
+    const string s = "{\"id\":null,\"method\":\"client.reconnect\",\"params\":[]}\n";
+    sendData(s);
+
+    LOG(INFO) << "version rolling disabled mid-way, send client.reconnect. "
+              << "worker: " << worker_.fullName_
+              << ", version rolling shares: " << versionRollingShareCounter_;
+  }
 }
 
 void StratumSession::handleRequest_Submit(const string &idStr,
