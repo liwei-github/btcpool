@@ -57,6 +57,15 @@ StratumJobEx* JobRepositoryEth::createStratumJobEx(StratumJob *sjob, bool isClea
 void JobRepositoryEth::broadcastStratumJob(StratumJob *sjob) {
   StratumJobEth* sjobEth = dynamic_cast<StratumJobEth*>(sjob);
 
+  for (auto it : exJobs_) {
+    StratumJobEth* oldJobEth = dynamic_cast<StratumJobEth*>(it.second->sjob_);
+    if (oldJobEth->headerHash_ == sjobEth->headerHash_) {
+      LOG(INFO) << "skip stratum job " << std::hex << sjobEth->jobId_
+                << ", header hash " << sjobEth->headerHash_ << " exists";
+      return;
+    }
+  }
+
   LOG(INFO) << "broadcast eth stratum job " << std::hex << sjobEth->jobId_;
 
   bool isClean = false;
