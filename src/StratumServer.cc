@@ -299,7 +299,8 @@ void JobRepository::tryCleanExpiredJobs() {
   ScopeLock sl(lock_);
 
   const uint32_t nowTs = (uint32_t)time(nullptr);
-  while (exJobs_.size()) {
+  // Keep at least one job
+  while (exJobs_.size() > 1) {
     // Maps (and sets) are sorted, so the first element is the smallest,
     // and the last element is the largest.
     auto itr = exJobs_.begin();
